@@ -2,71 +2,54 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover"
-    />
-    <meta name="theme-color" content="#f59e0b" />
-    <meta name="color-scheme" content="dark light" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000000" />
+    <link rel="manifest" href="/manifest.webmanifest" />
 
-    <!-- SEO / Partage (facultatif) -->
-    <title>Darts Counter</title>
-    <meta name="description" content="Compteur de fléchettes : X01, Cricket, Horloge, Battle Royale, Entraînement. PWA installable Android." />
-    <meta property="og:title" content="Darts Counter" />
-    <meta property="og:description" content="Compteur de fléchettes complet — multi-modes, stats, PWA." />
-    <meta property="og:type" content="website" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Icône onglet (met le fichier dans /public/icons/) -->
-    <link rel="icon" href="/icons/icon-192.png" sizes="192x192" />
-    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <!-- Icônes PWA -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/app-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/app-512.png" />
+    <link rel="apple-touch-icon" href="/icons/app-192.png" />
 
-    <!-- PWA -->
-    <link rel="manifest" href="/manifest.webmanifest">
-    <meta name="theme-color" content="#f59e0b" />    
-
-    <!-- Police moderne -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Police cartoon stylée -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap"
       rel="stylesheet"
     />
 
-    <!-- Styles globaux (si tu utilises src/index.css) -->
-    <link rel="stylesheet" href="/src/index.css" />
+    <title>Darts Counter 🎯</title>
+
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: radial-gradient(1000px 600px at 30% -10%, #141517, #0a0a0a 40%, #000);
+        color: #fff;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+      #root {
+        height: 100%;
+      }
+      /* Splash screen rapide pendant le chargement */
+      #loading {
+        display: grid;
+        place-items: center;
+        height: 100vh;
+        font-family: "Luckiest Guy", cursive;
+        font-size: 2rem;
+        color: #fbbf24;
+        text-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+      }
+    </style>
   </head>
 
   <body>
-    <noscript>
-      Pour utiliser cette application, activez JavaScript.
-    </noscript>
+    <div id="root">
+      <div id="loading">🎯 DARTS COUNTER</div>
+    </div>
 
-    <div id="root"></div>
-
-    <!-- Entrée Vite/React -->
+    <!-- Script principal React/Vite -->
     <script type="module" src="/src/main.tsx"></script>
-
-    <!-- Enregistrement du Service Worker PWA -->
-    <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker
-            .register("/service-worker.js")
-            .catch((err) => console.log("SW registration failed:", err));
-        });
-      }
-    </script>
-
-    <!-- Conseils d'installation (facultatif)
-    <script>
-      window.addEventListener("beforeinstallprompt", (e) => {
-        // e.preventDefault(); // décommente si tu veux contrôler l'invite plus tard
-        // stocke e pour l'utiliser avec un bouton "Installer"
-      });
-    </script>
-    -->
   </body>
 </html>
