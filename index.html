@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f59e0b" />
+    <meta name="color-scheme" content="dark light" />
+
+    <!-- SEO / Partage (facultatif) -->
+    <title>Darts Counter</title>
+    <meta name="description" content="Compteur de fléchettes : X01, Cricket, Horloge, Battle Royale, Entraînement. PWA installable Android." />
+    <meta property="og:title" content="Darts Counter" />
+    <meta property="og:description" content="Compteur de fléchettes complet — multi-modes, stats, PWA." />
+    <meta property="og:type" content="website" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Icône onglet (met le fichier dans /public/icons/) -->
+    <link rel="icon" href="/icons/icon-192.png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#f59e0b" />    
+
+    <!-- Police moderne -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Styles globaux (si tu utilises src/index.css) -->
+    <link rel="stylesheet" href="/src/index.css" />
+  </head>
+
+  <body>
+    <noscript>
+      Pour utiliser cette application, activez JavaScript.
+    </noscript>
+
+    <div id="root"></div>
+
+    <!-- Entrée Vite/React -->
+    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Enregistrement du Service Worker PWA -->
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/service-worker.js")
+            .catch((err) => console.log("SW registration failed:", err));
+        });
+      }
+    </script>
+
+    <!-- Conseils d'installation (facultatif)
+    <script>
+      window.addEventListener("beforeinstallprompt", (e) => {
+        // e.preventDefault(); // décommente si tu veux contrôler l'invite plus tard
+        // stocke e pour l'utiliser avec un bouton "Installer"
+      });
+    </script>
+    -->
+  </body>
+</html>
