@@ -4,14 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#000000" />
+
+    <!-- Manifest PWA -->
     <link rel="manifest" href="/manifest.webmanifest" />
 
-    <!-- Icônes PWA -->
+    <!-- Icônes -->
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/app-192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/icons/app-512.png" />
     <link rel="apple-touch-icon" href="/icons/app-192.png" />
 
-    <!-- Police cartoon stylée -->
+    <!-- Police stylisée -->
     <link
       href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap"
       rel="stylesheet"
@@ -28,25 +30,46 @@
         color: #fff;
         font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       }
+
       #root {
         height: 100%;
       }
-      /* Splash screen rapide pendant le chargement */
+
+      /* Splash screen (avant chargement React) */
       #loading {
-        display: grid;
-        place-items: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         height: 100vh;
+        gap: 20px;
         font-family: "Luckiest Guy", cursive;
-        font-size: 2rem;
+        font-size: 2.2rem;
         color: #fbbf24;
-        text-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+        text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+        letter-spacing: 1px;
+        animation: pulse 2s infinite ease-in-out;
+      }
+
+      #loading img {
+        width: 90px;
+        height: 90px;
+        object-fit: contain;
+        filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.3));
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.05); }
       }
     </style>
   </head>
 
   <body>
     <div id="root">
-      <div id="loading">🎯 DARTS COUNTER</div>
+      <div id="loading">
+        <img src="/icons/LOGO DARTS COUNTER.png" alt="Logo Darts Counter" />
+        <span>DARTS COUNTER</span>
+      </div>
     </div>
 
     <!-- Script principal React/Vite -->
