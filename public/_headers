@@ -1,0 +1,7 @@
+/*
+  Content-Security-Policy: default-src 'self';
+  Content-Security-Policy: img-src 'self' data: blob:;
+  Content-Security-Policy: style-src 'self' 'unsafe-inline';
+  Content-Security-Policy: script-src 'self' 'unsafe-inline';
+  Content-Security-Policy: connect-src *;
+  Content-Security-Policy: media-src 'self' blob: data:;
