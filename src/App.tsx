@@ -3365,152 +3365,159 @@ function Avatar({ name, src, size = 70 }: { name: string; src?: string; size?: n
     }
   }
   
-  /* =========================================
-     SectionTabs (verre dépoli, réutilisable)
-     ========================================= */
-  type TabItem = { key: string; label: string; icon?: IconName };
-  function SectionTabs({
-    tabs,
-    value,
-    onChange,
-    rightSlot,
-  }: {
-    tabs: TabItem[];
-    value: string;
-    onChange: (k: string) => void;
-    rightSlot?: React.ReactNode;
-  }) {
-    const bar: React.CSSProperties = {
-      display: "flex",
-      alignItems: "center",
-      gap: 6,
-      padding: 6,
-      borderRadius: 14,
-      background: "linear-gradient(180deg, rgba(20,20,24,.45), rgba(10,10,12,.55))",
-      border: "1px solid rgba(255,255,255,.07)",
-      backdropFilter: "blur(6px)",
-    };
-    const btn: React.CSSProperties = {
-      appearance: "none",
-      border: "1px solid transparent",
-      background: "transparent",
-      color: "#e7e7e7",
-      padding: "8px 10px",
-      borderRadius: 12,
-      display: "flex",
-      alignItems: "center",
-      gap: 8,
-      cursor: "pointer",
-      fontSize: 13,
-      transition: "all 160ms ease",
-    };
-    return (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
-      >
-        <div style={bar}>
-          {tabs.map((t) => {
-            const active = t.key === value;
-            return (
-              <button
-                key={t.key}
-                onClick={() => onChange(t.key)}
-                style={{
-                  ...btn,
-                  background: active
-                    ? "radial-gradient(100px 50px at 50% -20%, rgba(245,158,11,.28), rgba(245,158,11,.07))"
-                    : "transparent",
-                  color: active ? "var(--c-primary)" : "#e7e7e7",
-                  border: active
-                    ? "1px solid rgba(245,158,11,.35)"
-                    : "1px solid transparent",
-                  fontWeight: active ? 800 : 600,
-                }}
-              >
-                {t.icon && <Icon name={t.icon} active={active} />}
-                <span>{t.label}</span>
-              </button>
-            );
-          })}
-        </div>
-        {rightSlot}
-      </div>
-    );
-  }
-  
-  /* ===================== Modal (verre dépoli) ===================== */
-  function Modal({
-    open,
-    onClose,
-    title,
-    children,
-  }: {
-    open: boolean;
-    onClose: () => void;
-    title: string;
-    children: React.ReactNode;
-  }) {
-    if (!open) return null;
-    return (
-      <div
-        onClick={onClose}
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(0,0,0,.5)",
-          display: "grid",
-          placeItems: "center",
-          zIndex: 100,
-        }}
-      >
-        <div
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            width: "min(720px, 92vw)",
-            maxHeight: "80vh",
-            overflow: "auto",
-            borderRadius: 16,
-            border: "1px solid rgba(255,255,255,.08)",
-            background:
-              "linear-gradient(180deg, rgba(20,20,24,.65), rgba(10,10,12,.85))",
-            padding: 16,
-            color: "#eee",
-            backdropFilter: "blur(10px)",
-            WebkitBackdropFilter: "blur(10px)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ fontWeight: 800, fontSize: 18 }}>{title}</div>
+ /* =========================================
+   SectionTabs (verre dépoli, réutilisable)
+   ========================================= */
+type TabItem = { key: string; label: string; icon?: IconName };
+
+function SectionTabs({
+  tabs,
+  value,
+  onChange,
+  rightSlot,
+}: {
+  tabs: TabItem[];
+  value: string;
+  onChange: (k: string) => void;
+  rightSlot?: React.ReactNode;
+}) {
+  const bar: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    padding: 6,
+    borderRadius: 14,
+    background: "linear-gradient(180deg, rgba(20,20,24,.45), rgba(10,10,12,.55))",
+    border: "1px solid rgba(255,255,255,.07)",
+    backdropFilter: "blur(6px)",
+  };
+
+  const btn: React.CSSProperties = {
+    appearance: "none",
+    border: "1px solid transparent",
+    background: "transparent",
+    color: "#e7e7e7",
+    padding: "8px 10px",
+    borderRadius: 12,
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    cursor: "pointer",
+    fontSize: 13,
+    transition: "all 160ms ease",
+  };
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+      }}
+    >
+      <div style={bar}>
+        {tabs.map((t) => {
+          const active = t.key === value;
+          return (
             <button
-              onClick={onClose}
+              key={t.key}
+              onClick={() => onChange(t.key)}
               style={{
-                marginLeft: "auto",
-                border: "1px solid rgba(255,255,255,.08)",
-                background: "#0e0e11",
-                color: "#eee",
-                padding: "6px 10px",
-                borderRadius: 10,
-                cursor: "pointer",
+                ...btn,
+                background: active
+                  ? "radial-gradient(100px 50px at 50% -20%, rgba(245,158,11,.28), rgba(245,158,11,.07))"
+                  : "transparent",
+                color: active ? "var(--c-primary)" : "#e7e7e7",
+                border: active
+                  ? "1px solid rgba(245,158,11,.35)"
+                  : "1px solid transparent",
+                fontWeight: active ? 800 : 600,
               }}
             >
-              Fermer
+              {t.icon && <Icon name={t.icon} active={active} />}
+              <span>{t.label}</span>
             </button>
-          </div>
-          <div style={{ marginTop: 10, lineHeight: 1.5 }}>{children}</div>
-        </div>
+          );
+        })}
       </div>
-    );
-  }
-  
-  function InfoButton({ mode }: { mode: string }) {
+      {rightSlot}
+    </div>
+  );
+}
+
+/* ===================== Modal (verre dépoli) ===================== */
+function Modal({
+  open,
+  onClose,
+  title,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  if (!open) return null;
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,.5)",
+        display: "grid",
+        placeItems: "center",
+        zIndex: 100,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "min(720px, 92vw)",
+          maxHeight: "80vh",
+          overflow: "auto",
+          borderRadius: 16,
+          border: "1px solid rgba(255,255,255,.08)",
+          background:
+            "linear-gradient(180deg, rgba(20,20,24,.65), rgba(10,10,12,.85))",
+          padding: 16,
+          color: "#eee",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ fontWeight: 800, fontSize: 18 }}>{title}</div>
+          <button
+            onClick={onClose}
+            style={{
+              marginLeft: "auto",
+              border: "1px solid rgba(255,255,255,.08)",
+              background: "#0e0e11",
+              color: "#eee",
+              padding: "6px 10px",
+              borderRadius: 10,
+              cursor: "pointer",
+            }}
+          >
+            Fermer
+          </button>
+        </div>
+
+        <div style={{ marginTop: 10, lineHeight: 1.5 }}>{children}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ===================== InfoButton (ouvre les règles) ===================== */
+function InfoButton({ mode }: { mode: string }) {
   const [open, setOpen] = React.useState(false);
-  const key = "X01_RULE"; // ou adapte selon ta logique si plusieurs jeux
-  const text = GAME_RULES[key]; // texte des règles depuis ta constante
+  // Adapte la clé selon ta logique si plusieurs jeux
+  const key = "X01_RULE";
+  const text = GAME_RULES[key];
 
   return (
     <>
