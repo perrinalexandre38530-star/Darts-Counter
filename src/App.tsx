@@ -789,244 +789,83 @@ export default function App() {
   );
 }
 
-  /* =====================================================
-     🎯 Logique X01 : manche/fin de partie (dialog + handler)
-     (Assure-toi d'avoir importé depuis "./x01")
-     ===================================================== */
-  const startingScore = rules?.startingScore ?? 501;
-  const totalLegs = (rules as any)?.totalLegs ?? 3; // adapte si tu as ce champ dans tes règles
-  const roster = profiles.map(p => ({ id: p.id, name: p.name }));
+ /* =====================================================
+   🎯 Logique X01 : manche/fin de partie (dialog + handler)
+   ===================================================== */
+const startingScore = rules?.startingScore ?? 501;
+const totalLegs = (rules as any)?.totalLegs ?? 3; // adapte si tu as ce champ
+const roster = profiles.map(p => ({ id: p.id, name: p.name }));
 
-  const [match, setMatch] = React.useState(() =>
-    X01createMatch(startingScore, roster, totalLegs)
-  );
-  const [dialog, setDialog] = React.useState<null | {
-    title: string;
-    message: string;
-    actions: Array<{ label: string; onClick: () => void }>;
-  }>(null);
+const [match, setMatch] = React.useState(() =>
+  x01CreateMatch(startingScore, roster, totalLegs)
+);
 
-  // Recrée une manche si les profils ou le startingScore changent sensiblement
-  useEffect(() => {
-    setMatch(createMatch(startingScore, roster, totalLegs));
-  }, [startingScore, totalLegs, profiles.length]); // simple, évite un roster obsolète
+const [dialog, setDialog] = React.useState<null | {
+  title: string;
+  message: string;
+  actions: Array<{ label: string; onClick: () => void }>;
+}>(null);
 
-  function handleSubmitX01(darts: Dart[]) {
-    setMatch(prev => {
-      const { match: updated, legEnded, winnerId } = X01playVisit(structuredClone(prev), darts);
+// Recrée la manche si paramètres/roster changent
+React.useEffect(() => {
+  setMatch(x01CreateMatch(startingScore, roster, totalLegs));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [
+  startingScore,
+  totalLegs,
+  // suit les changements de roster (ids) pour éviter les recréations excessives
+  React.useMemo(() => roster.map(r => r.id).join(","), [roster]),
+]);
 
-      if (legEnded && winnerId) {
-        const who = updated.leg.players[winnerId].name;
-        const isLastLeg = updated.currentLegNumber >= updated.totalLegs;
+function handleSubmitX01(darts: X01Dart[]) {
+  setMatch(prev => {
+    const { match: updated, legEnded, winnerId } =
+      x01PlayVisit(structuredClone(prev), darts);
 
-        setDialog({
-          title: `Manche ${updated.currentLegNumber} terminée`,
-          message: `${who} gagne la manche 🎯`,
-          actions: [
-            {
-              label: "Rejouer cette manche",
-              onClick: () => {
-                setMatch(m => {
-                  const cur = structuredClone(m);
-                  cur.leg = X01createLeg(cur.leg.startingScore, Object.values(cur.leg.players));
-                  return cur;
-                });
-                setDialog(null);
-              },
+    if (legEnded && winnerId) {
+      const who = updated.leg.players[winnerId].name;
+      const isLastLeg = updated.currentLegNumber >= updated.totalLegs;
+
+      setDialog({
+        title: `Manche ${updated.currentLegNumber} terminée`,
+        message: `${who} gagne la manche 🎯`,
+        actions: [
+          {
+            label: "Rejouer cette manche",
+            onClick: () => {
+              setMatch(m => {
+                const cur = structuredClone(m);
+                cur.leg = x01CreateLeg(
+                  cur.leg.startingScore,
+                  Object.values(cur.leg.players)
+                );
+                return cur;
+              });
+              setDialog(null);
             },
-            ...(isLastLeg
-              ? [{
+          },
+          ...(isLastLeg
+            ? [
+                {
                   label: "Terminer le match",
                   onClick: () => setDialog(null),
-                }]
-              : [{
+                },
+              ]
+            : [
+                {
                   label: "Manche suivante",
                   onClick: () => {
-                    setMatch(m => X01nextLeg(structuredClone(m), true));
+                    setMatch(m => x01NextLeg(structuredClone(m), true));
                     setDialog(null);
                   },
-                }]
-            ),
-          ],
-        });
-      }
+                },
+              ]),
+        ],
+      });
+    }
 
-      return updated;
-    });
-  }
-
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: arcade
-          ? "radial-gradient(1200px 600px at 30% -10%, #0d0f2a, #050510 40%, #000), linear-gradient(135deg, rgba(0,255,204,.08), rgba(255,0,128,.05))"
-          : "radial-gradient(1200px 600px at 30% -10%, #141517, #0a0a0a 40%, #000)",
-        color: "#fff",
-        paddingBottom: 80,
-        fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-      }}
-    >
-      <GlobalStyles />
-      <TopGlassNav route={route} setRoute={setRoute} />
-
-      <main style={{ maxWidth: 1000, margin: "0 auto", padding: 16 }}>
-        {route === "home" && (
-          <Home
-            account={account}
-            loggedIn={loggedIn}
-            onGoGames={() => setRoute("games")}
-            onGoProfiles={() => setRoute("profiles")}
-            onGoStats={() => setRoute("stats")}
-            onGoOnline={() => setRoute("online")}
-            onGoLogin={() => setRoute("account")}
-          />
-        )}
-
-        {route === "games" && <GamesHub current={mode} onPick={startLobby} />}
-
-        {route === "profiles" && (
-          <ProfilesPage
-            profiles={profiles}
-            setProfiles={setProfiles}
-            teams={teams}
-            setTeams={setTeams}
-            events={events}
-            account={account}
-            loggedIn={loggedIn}
-            onOpenAccount={() => setRoute("account")}
-          />
-        )}
-
-        {route === "allgames" && (
-          <AllGamesPage
-            games={games}
-            events={events}
-            profiles={profiles}
-            onOpen={(id) => console.log("open", id)}
-          />
-        )}
-
-        {route === "lobby" && (
-          <LobbyPage
-            mode={mode}
-            teams={teams}
-            profiles={profiles}
-            rules={rules}
-            setRules={setRules}
-            onStart={launchGame}
-            onBack={() => setRoute("games")}
-          />
-        )}
-
-        {route === "game" && (
-          <GamePage
-            mode={mode}
-            rules={rules}
-            players={players}
-            setPlayers={setPlayers}
-            activeId={activeId}
-            setActiveId={setActiveId}
-            onEnd={() => setRoute("home")}
-            speak={speak}
-            ttsLang={ttsLang}
-            /* ⬇️ Si ton GamePage accepte un prop pour valider une volée X01,
-               passe-le ici. Sinon, garde-le côté GamePage. */
-            // onX01Submit={handleSubmitX01}
-          />
-        )}
-
-        {route === "gamestats" && (
-          <GameStatsPage players={players} onBack={() => setRoute("game")} />
-        )}
-
-        {route === "stats" && <StatsPage profiles={profiles} />}
-
-        {route === "teams" && <TeamsPage teams={teams} setTeams={setTeams} />}
-
-        {route === "settings" && (
-          <SettingsPage
-            rules={rules}
-            setRules={setRules}
-            arcade={arcade}
-            setArcade={setArcade}
-            ttsEnabled={ttsEnabled}
-            setTtsEnabled={setTtsEnabled}
-            ttsLang={ttsLang}
-            setTtsLang={setTtsLang}
-          />
-        )}
-
-        {/* === NOUVELLES ROUTES === */}
-        {route === "account" && (
-          <AccountPage
-            account={account}
-            loggedIn={loggedIn}
-            onCreate={(acc) => {
-              setAccount(acc);
-              setLoggedIn(true);
-              setRoute("home");
-            }}
-            onLogin={(ok) => {
-              if (ok) {
-                setLoggedIn(true);
-                setRoute("home");
-              }
-            }}
-            onLogout={() => setLoggedIn(false)}
-            onGoFriends={() => setRoute("friends")}
-          />
-        )}
-
-        {route === "friends" && (
-          <FriendsPage
-            friends={friends}
-            setFriends={setFriends}
-            onBack={() => setRoute("account")}
-          />
-        )}
-
-        {route === "online" && (
-          <OnlineLobbyPage
-            account={account}
-            loggedIn={loggedIn}
-            lobbies={lobbies}
-            setLobbies={setLobbies}
-            onBack={() => setRoute("home")}
-          />
-        )}
-      </main>
-
-      {/* Overlay de fin de manche (dialog simple) */}
-      {dialog && (
-        <div className="fixed inset-0 z-50 grid place-items-center" style={{ background: "rgba(0,0,0,.55)" }}>
-          <div className="rounded-2xl p-4" style={{ background: "#111", color: "#fff", width: "min(92vw, 440px)" }}>
-            <h3 style={{ fontWeight: 700, fontSize: 18, marginBottom: 8 }}>{dialog.title}</h3>
-            <p style={{ opacity: .9, marginBottom: 12 }}>{dialog.message}</p>
-            <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
-              {dialog.actions.map((a, i) => (
-                <button key={i} onClick={a.onClick}
-                  style={{
-                    padding: "10px 12px",
-                    borderRadius: 12,
-                    border: "none",
-                    background: "#fff1",
-                    color: "#fff",
-                    cursor: "pointer"
-                  }}>
-                  {a.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-       {dialog && <SimpleDialog {...dialog} />}
-
-      <BottomNav route={route} setRoute={setRoute} />
-    </div>
-  );
+    return updated;
+  });
 }
 
 /* =========================================
