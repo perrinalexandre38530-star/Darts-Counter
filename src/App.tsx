@@ -754,6 +754,72 @@ export default function App() {
     setRoute("game");
   }
 
+  /* =====================================================
+     🎯 Logique X01 : manche/fin de partie (dialog + handler)
+     (Assure-toi d'avoir importé depuis "./x01")
+     ===================================================== */
+  const startingScore = rules?.startingScore ?? 501;
+  const totalLegs = (rules as any)?.totalLegs ?? 3; // adapte si tu as ce champ dans tes règles
+  const roster = profiles.map(p => ({ id: p.id, name: p.name }));
+
+  const [match, setMatch] = React.useState(() =>
+    createMatch(startingScore, roster, totalLegs)
+  );
+  const [dialog, setDialog] = React.useState<null | {
+    title: string;
+    message: string;
+    actions: Array<{ label: string; onClick: () => void }>;
+  }>(null);
+
+  // Recrée une manche si les profils ou le startingScore changent sensiblement
+  useEffect(() => {
+    setMatch(createMatch(startingScore, roster, totalLegs));
+  }, [startingScore, totalLegs, profiles.length]); // simple, évite un roster obsolète
+
+  function handleSubmitX01(darts: Dart[]) {
+    setMatch(prev => {
+      const { match: updated, legEnded, winnerId } = playVisit(structuredClone(prev), darts);
+
+      if (legEnded && winnerId) {
+        const who = updated.leg.players[winnerId].name;
+        const isLastLeg = updated.currentLegNumber >= updated.totalLegs;
+
+        setDialog({
+          title: `Manche ${updated.currentLegNumber} terminée`,
+          message: `${who} gagne la manche 🎯`,
+          actions: [
+            {
+              label: "Rejouer cette manche",
+              onClick: () => {
+                setMatch(m => {
+                  const cur = structuredClone(m);
+                  cur.leg = createLeg(cur.leg.startingScore, Object.values(cur.leg.players));
+                  return cur;
+                });
+                setDialog(null);
+              },
+            },
+            ...(isLastLeg
+              ? [{
+                  label: "Terminer le match",
+                  onClick: () => setDialog(null),
+                }]
+              : [{
+                  label: "Manche suivante",
+                  onClick: () => {
+                    setMatch(m => nextLeg(structuredClone(m), true));
+                    setDialog(null);
+                  },
+                }]
+            ),
+          ],
+        });
+      }
+
+      return updated;
+    });
+  }
+
   return (
     <div
       style={{
@@ -793,7 +859,7 @@ export default function App() {
             events={events}
             account={account}
             loggedIn={loggedIn}
-            onOpenAccount={() => setRoute("account")}   // clic sur “Votre compte” ou gestion avatar
+            onOpenAccount={() => setRoute("account")}
           />
         )}
 
@@ -829,6 +895,9 @@ export default function App() {
             onEnd={() => setRoute("home")}
             speak={speak}
             ttsLang={ttsLang}
+            /* ⬇️ Si ton GamePage accepte un prop pour valider une volée X01,
+               passe-le ici. Sinon, garde-le côté GamePage. */
+            // onX01Submit={handleSubmitX01}
           />
         )}
 
@@ -892,6 +961,31 @@ export default function App() {
           />
         )}
       </main>
+
+      {/* Overlay de fin de manche (dialog simple) */}
+      {dialog && (
+        <div className="fixed inset-0 z-50 grid place-items-center" style={{ background: "rgba(0,0,0,.55)" }}>
+          <div className="rounded-2xl p-4" style={{ background: "#111", color: "#fff", width: "min(92vw, 440px)" }}>
+            <h3 style={{ fontWeight: 700, fontSize: 18, marginBottom: 8 }}>{dialog.title}</h3>
+            <p style={{ opacity: .9, marginBottom: 12 }}>{dialog.message}</p>
+            <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
+              {dialog.actions.map((a, i) => (
+                <button key={i} onClick={a.onClick}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: 12,
+                    border: "none",
+                    background: "#fff1",
+                    color: "#fff",
+                    cursor: "pointer"
+                  }}>
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <BottomNav route={route} setRoute={setRoute} />
     </div>
@@ -3019,6 +3113,159 @@ function X01Keypad({
       </div>
     </div>
   );
+}
+
+// x01.ts
+export type Mult = 1 | 2 | 3;
+export type Dart = { value: number; mult: Mult }; // 0..20, 25 (bull S=25, D=50)
+export type Player = { id: string; name: string; score: number };
+
+export type VisitResult = {
+  nextScore: number;
+  bust: boolean;
+  finished: boolean;              // a fini la manche (double-out OK)
+  checkoutDartIndex: number | null; // 0..2 si fini sur cette fléchette
+};
+
+export function dartScore(d: Dart): number {
+  if (d.value === 25) return d.mult === 2 ? 50 : 25;
+  return d.value * d.mult;
+}
+
+export function isDouble(d: Dart): boolean {
+  if (d.value === 25 && d.mult === 2) return true; // inner bull = double
+  return d.mult === 2;
+}
+
+/** Applique une volée de 1..3 fléchettes avec règle double-out et busts. */
+export function applyVisitX01(startScore: number, darts: Dart[]): VisitResult {
+  let score = startScore;
+  let bust = false;
+  let finished = false;
+  let checkoutDartIndex: number | null = null;
+
+  // La règle X01 « 1 » est intouchable (1 restant = bust si on retombe dessus)
+  // On traite fléchette par fléchette pour arrêter dès qu'il faut.
+  for (let i = 0; i < darts.length; i++) {
+    const d = darts[i];
+    const s = dartScore(d);
+    const proposed = score - s;
+
+    // Dépassement ou reste 1 => bust (score revient au début de la volée)
+    if (proposed < 0 || proposed === 1) {
+      bust = true;
+      score = startScore; // rollback à l’état d’avant-volée
+      break;
+    }
+
+    // Proposé 0 => doit finir en double
+    if (proposed === 0) {
+      if (isDouble(d)) {
+        finished = true;
+        checkoutDartIndex = i;
+        score = 0;
+      } else {
+        bust = true;
+        score = startScore;
+      }
+      break; // dans tous les cas on arrête la volée
+    }
+
+    // Sinon on valide et on continue
+    score = proposed;
+  }
+
+  return { nextScore: score, bust, finished, checkoutDartIndex };
+}
+
+// -------------------------- Gestion de manche / match --------------------------
+
+export type LegState = {
+  startingScore: number;          // 301/501/701...
+  order: string[];                // ordre des joueurs, tableau d’ids
+  activeIndex: number;            // index du joueur actif dans order
+  players: Record<string, Player>;
+  winnerId: string | null;        // rempli dès qu’un joueur finit
+  finished: boolean;              // true quand la manche est officiellement close
+};
+
+export type MatchState = {
+  totalLegs: number;              // nb de manches à jouer (ou Best-of, à adapter)
+  currentLegNumber: number;       // 1-based
+  legsWon: Record<string, number>;
+  leg: LegState;
+};
+
+export function createLeg(startingScore: number, roster: Array<{ id: string; name: string }>, firstToThrowId?: string): LegState {
+  const order = [...roster.map(r => r.id)];
+  // Si on veut commencer par un joueur précis (p.ex. faire tourner le "first")
+  if (firstToThrowId && order.includes(firstToThrowId)) {
+    while (order[0] !== firstToThrowId) order.push(order.shift()!);
+  }
+  const players: Record<string, Player> = {};
+  roster.forEach(r => {
+    players[r.id] = { id: r.id, name: r.name, score: startingScore };
+  });
+  return {
+    startingScore,
+    order,
+    activeIndex: 0,
+    players,
+    winnerId: null,
+    finished: false,
+  };
+}
+
+export function createMatch(startingScore: number, roster: Array<{ id: string; name: string }>, totalLegs = 1): MatchState {
+  return {
+    totalLegs,
+    currentLegNumber: 1,
+    legsWon: Object.fromEntries(roster.map(r => [r.id, 0])),
+    leg: createLeg(startingScore, roster),
+  };
+}
+
+/**
+ * Joue une volée pour le joueur actif.
+ * - Si un joueur finit à 0 (double-out), la manche est marquée finie immédiatement,
+ *   on n’avance PAS aux joueurs restants.
+ * - Sinon, on passe au joueur suivant normal.
+ */
+export function playVisit(match: MatchState, darts: Dart[]): { match: MatchState; legEnded: boolean; winnerId: string | null; visit: VisitResult } {
+  const leg = match.leg;
+  if (leg.finished) {
+    return { match, legEnded: true, winnerId: leg.winnerId, visit: { nextScore: 0, bust: false, finished: true, checkoutDartIndex: 0 } };
+  }
+
+  const playerId = leg.order[leg.activeIndex];
+  const p = leg.players[playerId];
+
+  const visit = applyVisitX01(p.score, darts);
+  leg.players[playerId] = { ...p, score: visit.nextScore };
+
+  if (visit.finished) {
+    leg.winnerId = playerId;
+    leg.finished = true;
+    // On crédite la manche au vainqueur
+    match.legsWon[playerId] = (match.legsWon[playerId] ?? 0) + 1;
+    return { match, legEnded: true, winnerId: playerId, visit };
+  }
+
+  // Pas fini => tour suivant
+  leg.activeIndex = (leg.activeIndex + 1) % leg.order.length;
+  return { match, legEnded: false, winnerId: null, visit };
+}
+
+/** Prépare la manche suivante. On peut aussi faire tourner le 1er tireur. */
+export function nextLeg(match: MatchState, rotateFirst = true): MatchState {
+  const prev = match.leg;
+  const firstOfNext = rotateFirst
+    ? prev.order[(prev.activeIndex) % prev.order.length] // le suivant commence
+    : prev.order[0];
+
+  match.currentLegNumber = Math.min(match.currentLegNumber + 1, match.totalLegs);
+  match.leg = createLeg(prev.startingScore, Object.values(prev.players), firstOfNext);
+  return match;
 }
 
 /* =========================================
