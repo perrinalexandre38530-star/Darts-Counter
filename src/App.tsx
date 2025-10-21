@@ -2991,69 +2991,6 @@ function X01Keypad({
   );
 }
 
-// x01.ts
-export type Mult = 1 | 2 | 3;
-export type Dart = { value: number; mult: Mult }; // 0..20, 25 (bull S=25, D=50)
-export type Player = { id: string; name: string; score: number };
-
-export type VisitResult = {
-  nextScore: number;
-  bust: boolean;
-  finished: boolean;              // a fini la manche (double-out OK)
-  checkoutDartIndex: number | null; // 0..2 si fini sur cette fléchette
-};
-
-export function dartScore(d: Dart): number {
-  if (d.value === 25) return d.mult === 2 ? 50 : 25;
-  return d.value * d.mult;
-}
-
-export function isDouble(d: Dart): boolean {
-  if (d.value === 25 && d.mult === 2) return true; // inner bull = double
-  return d.mult === 2;
-}
-
-/** Applique une volée de 1..3 fléchettes avec règle double-out et busts. */
-export function applyVisitX01(startScore: number, darts: Dart[]): VisitResult {
-  let score = startScore;
-  let bust = false;
-  let finished = false;
-  let checkoutDartIndex: number | null = null;
-
-  // La règle X01 « 1 » est intouchable (1 restant = bust si on retombe dessus)
-  // On traite fléchette par fléchette pour arrêter dès qu'il faut.
-  for (let i = 0; i < darts.length; i++) {
-    const d = darts[i];
-    const s = dartScore(d);
-    const proposed = score - s;
-
-    // Dépassement ou reste 1 => bust (score revient au début de la volée)
-    if (proposed < 0 || proposed === 1) {
-      bust = true;
-      score = startScore; // rollback à l’état d’avant-volée
-      break;
-    }
-
-    // Proposé 0 => doit finir en double
-    if (proposed === 0) {
-      if (isDouble(d)) {
-        finished = true;
-        checkoutDartIndex = i;
-        score = 0;
-      } else {
-        bust = true;
-        score = startScore;
-      }
-      break; // dans tous les cas on arrête la volée
-    }
-
-    // Sinon on valide et on continue
-    score = proposed;
-  }
-
-  return { nextScore: score, bust, finished, checkoutDartIndex };
-}
-
 /* =========================================
    Avatar
    ========================================= */
