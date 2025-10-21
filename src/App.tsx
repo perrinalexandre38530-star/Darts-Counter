@@ -3508,39 +3508,41 @@ function Avatar({ name, src, size = 70 }: { name: string; src?: string; size?: n
   }
   
   function InfoButton({ mode }: { mode: string }) {
-    const [open, setOpen] = React.useState(false);
-    const key = MODE_TO_RULE_KEY[mode] || mode;
-    const text = GAME_RULES[key];
-  
-    return (
-      <>
-        <button
-          onClick={() => setOpen(true)}
-          title="Règles"
+  const [open, setOpen] = React.useState(false);
+  const key = "X01_RULE"; // ou adapte selon ta logique si plusieurs jeux
+  const text = GAME_RULES[key]; // texte des règles depuis ta constante
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        title="Règles"
+        style={{
+          border: "1px solid rgba(255,255,255,.08)",
+          background:
+            "linear-gradient(180deg, rgba(20,20,44,.4), rgba(10,10,12,.7))",
+          color: "#e0e0e0",
+          padding: "8px 10px",
+          borderRadius: 12,
+          cursor: "pointer",
+          fontWeight: 700,
+        }}
+      >
+        ?
+      </button>
+
+      <Modal open={open} onClose={() => setOpen(false)} title={`Règles — ${mode}`}>
+        <div
           style={{
-            border: "1px solid rgba(255,255,255,.08)",
-            background:
-              "linear-gradient(180deg, rgba(20,20,24,.45), rgba(10,10,12,.55))",
-            color: "#e7e7e7",
-            padding: "8px 10px",
-            borderRadius: 12,
-            cursor: "pointer",
-            fontWeight: 700,
+            whiteSpace: "pre-wrap",
+            fontFamily: "inherit",
+            margin: 0,
+            lineHeight: 1.5,
           }}
         >
-          i
-        </button>
-  
-        <Modal open={open} onClose={() => setOpen(false)} title={`Règles — ${mode}`}>
-          {text ? (
-            <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", margin: 0 }}>
-              {text}
-            </pre>
-          ) : (
-            <div>Règles à venir.</div>
-          )}
-        </Modal>
-      </>
-    );
-  }
-  
+          {text || "Règles à venir..."}
+        </div>
+      </Modal>
+    </>
+  );
+}
