@@ -1,7 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import StatsPage from "./pages/StatsPage";
-// 🎯 Moteur X01
-import { createMatch, playVisit, nextLeg, createLeg, Dart as X01Dart } from "./x01";
+import {
+  createMatch as x01CreateMatch,
+  playVisit  as x01PlayVisit,
+  nextLeg    as x01NextLeg,
+  createLeg  as x01CreateLeg,
+  Dart       as X01Dart,
+} from "./x01";
 
 /* =========================================
    Utils
