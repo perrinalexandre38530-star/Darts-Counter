@@ -798,7 +798,7 @@ export default function App() {
   const roster = profiles.map(p => ({ id: p.id, name: p.name }));
 
   const [match, setMatch] = React.useState(() =>
-    createMatch(startingScore, roster, totalLegs)
+    X01createMatch(startingScore, roster, totalLegs)
   );
   const [dialog, setDialog] = React.useState<null | {
     title: string;
