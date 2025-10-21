@@ -754,6 +754,34 @@ export default function App() {
     setRoute("game");
   }
 
+   function SimpleDialog({
+  title, message, actions,
+}: {
+  title: string;
+  message: string;
+  actions: Array<{ label: string; onClick: () => void }>;
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/55 grid place-items-center z-50">
+      <div className="bg-zinc-900 text-white p-4 rounded-2xl w-[min(92vw,440px)] space-y-3">
+        <h3 className="text-lg font-semibold">{title}</h3>
+        <p>{message}</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {actions.map((a, i) => (
+            <button
+              key={i}
+              onClick={a.onClick}
+              className="rounded-xl py-2 px-3 bg-white/10 hover:bg-white/15"
+            >
+              {a.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
   /* =====================================================
      🎯 Logique X01 : manche/fin de partie (dialog + handler)
      (Assure-toi d'avoir importé depuis "./x01")
