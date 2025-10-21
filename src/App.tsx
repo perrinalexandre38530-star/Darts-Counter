@@ -3553,3 +3553,5 @@ function InfoButton({ mode }: { mode: string }) {
     </>
   );
 }
+  
+} // <- fermeture finale manquante
