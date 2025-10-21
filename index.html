@@ -12,7 +12,7 @@
     <meta property="og:description" content="Compteur de fléchettes complet — multi-modes, stats, PWA." />
     <meta property="og:type" content="website" />
 
-    <!-- Icônes (doivent exister dans /public/icons/) -->
+    <!-- Icônes (dans /public/icons/) -->
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/app-192.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="/icons/app-192.png" />
 
@@ -24,7 +24,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- ✅ Content Security Policy : autorise avatars (data:/blob:) + Google Fonts -->
+    <!-- ✅ CSP : autorise avatars (data:/blob:) + Google Fonts -->
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
       img-src 'self' data: blob: https:;
@@ -36,9 +36,6 @@
       worker-src 'self' blob:;
       manifest-src 'self'
     ">
-
-    <!-- (Optionnel) Évite d’inclure /src/index.css en prod; importe-le dans main.tsx -->
-    <!-- <link rel="stylesheet" href="/src/index.css" /> -->
   </head>
 
   <body>
