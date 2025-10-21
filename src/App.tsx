@@ -842,7 +842,7 @@ export default function App() {
               : [{
                   label: "Manche suivante",
                   onClick: () => {
-                    setMatch(m => nextLeg(structuredClone(m), true));
+                    setMatch(m => X01nextLeg(structuredClone(m), true));
                     setDialog(null);
                   },
                 }]
