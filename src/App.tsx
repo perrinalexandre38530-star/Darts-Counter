@@ -828,7 +828,7 @@ export default function App() {
               onClick: () => {
                 setMatch(m => {
                   const cur = structuredClone(m);
-                  cur.leg = createLeg(cur.leg.startingScore, Object.values(cur.leg.players));
+                  cur.leg = X01createLeg(cur.leg.startingScore, Object.values(cur.leg.players));
                   return cur;
                 });
                 setDialog(null);
