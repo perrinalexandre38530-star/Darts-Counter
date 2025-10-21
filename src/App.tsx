@@ -813,7 +813,7 @@ export default function App() {
 
   function handleSubmitX01(darts: Dart[]) {
     setMatch(prev => {
-      const { match: updated, legEnded, winnerId } = playVisit(structuredClone(prev), darts);
+      const { match: updated, legEnded, winnerId } = X01playVisit(structuredClone(prev), darts);
 
       if (legEnded && winnerId) {
         const who = updated.leg.players[winnerId].name;
