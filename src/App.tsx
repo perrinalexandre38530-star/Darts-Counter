@@ -3228,26 +3228,6 @@ export type MatchState = {
   leg: LegState;
 };
 
-export function createLeg(startingScore: number, roster: Array<{ id: string; name: string }>, firstToThrowId?: string): LegState {
-  const order = [...roster.map(r => r.id)];
-  // Si on veut commencer par un joueur précis (p.ex. faire tourner le "first")
-  if (firstToThrowId && order.includes(firstToThrowId)) {
-    while (order[0] !== firstToThrowId) order.push(order.shift()!);
-  }
-  const players: Record<string, Player> = {};
-  roster.forEach(r => {
-    players[r.id] = { id: r.id, name: r.name, score: startingScore };
-  });
-  return {
-    startingScore,
-    order,
-    activeIndex: 0,
-    players,
-    winnerId: null,
-    finished: false,
-  };
-}
-
 export function createMatch(startingScore: number, roster: Array<{ id: string; name: string }>, totalLegs = 1): MatchState {
   return {
     totalLegs,
