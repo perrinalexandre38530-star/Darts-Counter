@@ -1015,6 +1015,8 @@ export default function App() {
         </div>
       )}
 
+       {dialog && <SimpleDialog {...dialog} />}
+
       <BottomNav route={route} setRoute={setRoute} />
     </div>
   );
