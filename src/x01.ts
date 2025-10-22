@@ -1,85 +1,81 @@
 // src/x01.ts
 
-/** --- Types de base --- */
 export type Mult = 1 | 2 | 3;
-export type Dart = { value: number; mult: Mult };        // 0..20, 25 (bull)
+export type Dart = { value: number; mult: Mult }; // 0..20, 25 (bull)
 export type Player = { id: string; name: string; score: number };
 
 export type VisitResult = {
   nextScore: number;
   bust: boolean;
-  finished: boolean;                 // a terminé la manche (double-out)
+  finished: boolean;                 // manche finie (double-out)
   checkoutDartIndex: number | null;  // 0..2 si fini sur cette fléchette
 };
 
-/** --- Utilitaires de score --- */
 export function dartScore(d: Dart): number {
-  if (d.value === 25) return d.mult === 2 ? 50 : 25; // bull (25/50)
+  if (!d) return 0;
+  if (d.value === 25) return d.mult === 2 ? 50 : 25;
+  if (d.value < 0 || d.value > 20) return 0;
   return d.value * d.mult;
 }
 
-export function isDouble(d: Dart): boolean {
-  if (d.value === 25 && d.mult === 2) return true; // inner bull = double
-  return d.mult === 2;
-}
-
-/** Applique une volée de 1..3 fléchettes (double-out, bust). */
-export function applyVisitX01(startScore: number, darts: Dart[]): VisitResult {
-  let score = startScore;
+export function applyVisitX01(
+  currentScore: number,
+  darts: Dart[],
+  doubleOut = true
+): VisitResult {
+  let score = currentScore;
   let bust = false;
   let finished = false;
   let checkoutDartIndex: number | null = null;
 
-  for (let i = 0; i < darts.length; i++) {
+  for (let i = 0; i < Math.min(3, darts.length); i++) {
     const d = darts[i];
-    const s = dartScore(d);
-    const proposed = score - s;
+    const pts = dartScore(d);
+    const proposed = score - pts;
 
-    // dépassement ou reste 1 => bust (rollback au début de volée)
-    if (proposed < 0 || proposed === 1) {
-      bust = true;
-      score = startScore;
-      break;
-    }
+    // dépassement
+    if (proposed < 0) { bust = true; break; }
 
-    // proposé 0 => doit finir en double
+    // il reste 1 → bust si double-out
+    if (doubleOut && proposed === 1) { bust = true; break; }
+
+    // check exact 0
     if (proposed === 0) {
-      if (isDouble(d)) {
-        finished = true;
-        checkoutDartIndex = i;
-        score = 0;
-      } else {
-        bust = true;
-        score = startScore;
+      if (!doubleOut) {
+        finished = true; checkoutDartIndex = i; score = 0; break;
       }
-      break;
+      const isValidDouble =
+        (d.value === 25 && d.mult === 2) || d.mult === 2;
+      if (isValidDouble) {
+        finished = true; checkoutDartIndex = i; score = 0; break;
+      } else { bust = true; break; }
     }
 
-    // sinon on valide et on continue
+    // ok
     score = proposed;
   }
 
-  return { nextScore: score, bust, finished, checkoutDartIndex };
+  return { nextScore: bust ? currentScore : score, bust, finished, checkoutDartIndex };
 }
 
-/** --- Gestion de manche / match --- */
+/* ---------------- Manches / match (ultra-simple) ---------------- */
+
 export type LegState = {
-  startingScore: number;      // 301/501/701...
-  order: string[];            // ordre des joueurs (ids)
-  activeIndex: number;        // index du joueur actif
+  startingScore: number;
+  order: string[];                 // ordre des joueurs (ids)
+  activeIndex: number;             // index du joueur actif
   players: Record<string, Player>;
-  winnerId: string | null;    // set dès qu’un joueur termine
-  finished: boolean;          // manche officiellement close
+  winnerId: string | null;
+  finished: boolean;
 };
 
 export type MatchState = {
-  totalLegs: number;          // nb de manches à jouer (ou best-of, à adapter)
-  currentLegNumber: number;   // 1-based
+  totalLegs: number;
+  currentLegNumber: number;        // 1-based
   legsWon: Record<string, number>;
   leg: LegState;
 };
 
-/** Crée une manche (option: forcer le 1er tireur via firstToThrowId). */
 export function createLeg(
   startingScore: number,
   roster: Array<{ id: string; name: string }>,
@@ -90,80 +86,60 @@ export function createLeg(
     while (order[0] !== firstToThrowId) order.push(order.shift()!);
   }
   const players: Record<string, Player> = {};
-  roster.forEach(r => {
-    players[r.id] = { id: r.id, name: r.name, score: startingScore };
-  });
-  return {
-    startingScore,
-    order,
-    activeIndex: 0,
-    players,
-    winnerId: null,
-    finished: false,
-  };
+  roster.forEach(r => (players[r.id] = { id: r.id, name: r.name, score: startingScore }));
+  return { startingScore, order, activeIndex: 0, players, winnerId: null, finished: false };
 }
 
-/** Crée un match avec la première manche prête. */
 export function createMatch(
   startingScore: number,
   roster: Array<{ id: string; name: string }>,
   totalLegs = 1
 ): MatchState {
+  const first = createLeg(startingScore, roster);
   return {
     totalLegs,
     currentLegNumber: 1,
     legsWon: Object.fromEntries(roster.map(r => [r.id, 0])),
-    leg: createLeg(startingScore, roster),
+    leg: first,
   };
 }
 
-/** Joue une volée pour le joueur actif. */
 export function playVisit(
-  match: MatchState,
-  darts: Dart[]
-): {
-  match: MatchState;
-  legEnded: boolean;
-  winnerId: string | null;
-  visit: VisitResult;
-} {
-  const leg = match.leg;
-
+  leg: LegState,
+  darts: Dart[],
+  doubleOut = true
+): { legEnded: boolean; winnerId: string | null; visit: VisitResult } {
   if (leg.finished) {
-    return {
-      match,
-      legEnded: true,
-      winnerId: leg.winnerId,
-      visit: { nextScore: 0, bust: false, finished: true, checkoutDartIndex: 0 },
-    };
+    return { legEnded: true, winnerId: leg.winnerId, visit: { nextScore: 0, bust: false, finished: true, checkoutDartIndex: 0 } };
   }
-
   const playerId = leg.order[leg.activeIndex];
   const p = leg.players[playerId];
-  const visit = applyVisitX01(p.score, darts);
+  const visit = applyVisitX01(p.score, darts, doubleOut);
 
   leg.players[playerId] = { ...p, score: visit.nextScore };
 
   if (visit.finished) {
     leg.winnerId = playerId;
     leg.finished = true;
-    match.legsWon[playerId] = (match.legsWon[playerId] ?? 0) + 1;
-    return { match, legEnded: true, winnerId: playerId, visit };
+    return { legEnded: true, winnerId: playerId, visit };
   }
 
-  // pas fini => joueur suivant
-  leg.activeIndex = (leg.activeIndex + 1) % leg.order.length;
-  return { match, legEnded: false, winnerId: null, visit };
+  // tour suivant
+  if (!visit.bust) {
+    leg.activeIndex = (leg.activeIndex + 1) % leg.order.length;
+  } else {
+    // bust → joueur suivant quand même
+    leg.activeIndex = (leg.activeIndex + 1) % leg.order.length;
+  }
+
+  return { legEnded: false, winnerId: null, visit };
 }
 
-/** Prépare la manche suivante (option: rotation du 1er tireur). */
-export function nextLeg(match: MatchState, rotateFirst = true): MatchState {
-  const prev = match.leg;
-  const firstOfNext = rotateFirst
-    ? prev.order[prev.activeIndex % prev.order.length] // le suivant commence
-    : prev.order[0];
-
-  match.currentLegNumber = Math.min(match.currentLegNumber + 1, match.totalLegs);
-  match.leg = createLeg(prev.startingScore, Object.values(prev.players), firstOfNext);
-  return match;
+export function nextLeg(
+  match: MatchState,
+  roster: Array<{ id: string; name: string }>,
+  startingScore?: number
+): void {
+  match.currentLegNumber += 1;
+  match.leg = createLeg(startingScore ?? match.leg.startingScore, roster);
 }
